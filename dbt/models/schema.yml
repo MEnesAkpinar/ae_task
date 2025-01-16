@@ -1,0 +1,43 @@
+version: 2
+
+sources:
+  - name: ae_task
+    description: Fuzzy source
+    schema: AE
+    tables:
+      - name: sources_for_fuzzy
+
+models:
+  - name: aggregate_data
+    description: "Aggregates data at the unique Account UUID level."
+    columns:
+      - name: Account_UUID
+        description: "The unique identifier for each account."
+        tests:
+          - unique
+          - not_null
+      - name: Site_Name
+        description: "The name of the site associated with the account."
+      - name: Parent_Account_Name
+        description: "The name of the parent account associated with the account."
+      - name: Country_Name
+        description: "The country associated with the account."
+      - name: Source_IDs
+        description: "An array of source IDs associated with the account."
+
+  - name: pre_fuzzy_cleansed
+    description: "Cleanses the data and prepares it for fuzzy matching."
+    columns:
+      - name: Account_UUID
+        description: "The unique identifier for each account."
+        tests:
+          - unique
+          - not_null
+      - name: Site_Name_Cleansed
+        description: "The cleansed and standardized site name."
+      - name: Parent_Account_Name_Cleansed
+        description: "The cleansed and standardized parent account name."
+      - name: Country_Name
+        description: "The country associated with the account."
+      - name: Source_IDs
+        description: "An array of source IDs associated with the account."      
