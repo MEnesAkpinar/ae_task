@@ -24,6 +24,8 @@ services:
       - SNOWFLAKE_DATABASE=adp_workspaces
       - SNOWFLAKE_SCHEMA=ae
     volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
       - ./ae_project:/opt/airflow/dags/ae_project
     ports:
       - "8080:8080"
@@ -60,6 +62,8 @@ services:
       - SNOWFLAKE_DATABASE=adp_workspaces
       - SNOWFLAKE_SCHEMA=ae
     volumes:
+      - ./logs:/opt/airflow/logs
+      - ./dags:/opt/airflow/dags
       - ./ae_project:/opt/airflow/dags/ae_project
     command: scheduler
     depends_on:
