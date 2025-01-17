@@ -6,8 +6,11 @@ services:
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
       POSTGRES_DB: airflow
+    ports:
+      - "5000:5000"
     volumes:
       - postgres-db-volume:/var/lib/postgresql/data
+    restart: always
 
   airflow-webserver:
     build:
@@ -16,7 +19,8 @@ services:
     image: apache/airflow:2.5.1
     environment:
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
-      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
       - SNOWFLAKE_ACCOUNT=xy12345.east-us-2.azure
       - SNOWFLAKE_USER=analytics_engineer
       - SNOWFLAKE_PASSWORD=securepassword123
@@ -26,23 +30,16 @@ services:
     volumes:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
-      - ./ae_project:/opt/airflow/dags/ae_project
+      - ./pipeline:/opt/airflow/pipeline
+      - ./ae_task:/opt/airflow/dags/ae_task
     ports:
-      - "8080:8080"
+      - "8081:8080"
     command: webserver
-    depends_on:
-      - postgres
-
-  airflow-init:
-    image: apache/airflow:2.5.1
-    environment:
-      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-      - AIRFLOW__CORE__LOAD_EXAMPLES=False
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
-    entrypoint: >
-      bash -c "
-      airflow db init &&
-      airflow users create --username admin --firstname Enes --lastname Akpinar --role Admin --email admin@dummyemail.com --password xyz12345"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
     depends_on:
       - postgres
 
@@ -54,7 +51,8 @@ services:
     image: apache/airflow:2.5.1
     environment:
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
-      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
       - SNOWFLAKE_ACCOUNT=xy12345.east-us-2.azure
       - SNOWFLAKE_USER=analytics_engineer
       - SNOWFLAKE_PASSWORD=securepassword123
@@ -64,10 +62,12 @@ services:
     volumes:
       - ./logs:/opt/airflow/logs
       - ./dags:/opt/airflow/dags
-      - ./ae_project:/opt/airflow/dags/ae_project
+      - ./pipeline:/opt/airflow/pipeline
+      - ./ae_task:/opt/airflow/dags/ae_task
     command: scheduler
     depends_on:
       - postgres
+    restart: always
 
 volumes:
   postgres-db-volume:
